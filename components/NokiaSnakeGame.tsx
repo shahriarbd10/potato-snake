@@ -12,6 +12,7 @@ type Direction = "up" | "down" | "left" | "right";
 type GameStatus = "idle" | "playing" | "paused" | "gameover";
 type SaveState = "idle" | "saving" | "saved" | "error";
 type LeaderboardState = "loading" | "ready" | "error";
+type PanelView = "menu" | "leaderboard";
 type GameState = {
   snake: Position[];
   direction: Direction;
@@ -27,6 +28,8 @@ type LeaderboardEntry = {
 const GRID_WIDTH = 18;
 const GRID_HEIGHT = 24;
 const PLAYER_NAME_KEY = "potato-snake-player-name";
+const PLAYER_ID_KEY = "potato-snake-player-id";
+const LEADERBOARD_PREVIEW_COUNT = 10;
 const INITIAL_SNAKE: Position[] = [
   { x: 7, y: 12 },
   { x: 6, y: 12 },
@@ -68,6 +71,14 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
 
 function normalizePlayerName(value: string) {
   return value.trim().replace(/\s+/g, " ").slice(0, 24);
+}
+
+function createPlayerId() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `player-${Math.random().toString(36).slice(2, 10)}${Date.now().toString(36)}`;
 }
 
 function randomFood(snake: Position[]) {
@@ -149,14 +160,19 @@ function CrownIcon({ rank }: { rank: number }) {
 export function NokiaSnakeGame() {
   const [game, setGame] = useState<GameState>(() => createInitialGame());
   const [status, setStatus] = useState<GameStatus>("idle");
+  const [panelView, setPanelView] = useState<PanelView>("menu");
+  const [isNaming, setIsNaming] = useState(false);
   const [highScore, setHighScore] = useState(0);
   const [playerName, setPlayerName] = useState("");
+  const [playerId, setPlayerId] = useState("");
   const [nameInput, setNameInput] = useState("");
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [leaderboardState, setLeaderboardState] = useState<LeaderboardState>("loading");
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [lastFinishedScore, setLastFinishedScore] = useState(0);
+  const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
   const gameRef = useRef<GameState>(createInitialGame());
   const statusRef = useRef<GameStatus>("idle");
   const pendingDirectionRef = useRef<Direction | null>(null);
@@ -172,6 +188,15 @@ export function NokiaSnakeGame() {
   useEffect(() => {
     statusRef.current = status;
   }, [status]);
+
+  useEffect(() => {
+    if (isNaming) {
+      window.requestAnimationFrame(() => {
+        nameInputRef.current?.focus();
+        nameInputRef.current?.select();
+      });
+    }
+  }, [isNaming]);
 
   async function loadLeaderboard() {
     try {
@@ -193,10 +218,18 @@ export function NokiaSnakeGame() {
   useEffect(() => {
     const storedHighScore = window.localStorage.getItem("potato-snake-high-score");
     const storedName = window.localStorage.getItem(PLAYER_NAME_KEY) ?? "";
+    let storedPlayerId = window.localStorage.getItem(PLAYER_ID_KEY) ?? "";
 
     if (storedHighScore) {
       setHighScore(Number.parseInt(storedHighScore, 10) || 0);
     }
+
+    if (!storedPlayerId) {
+      storedPlayerId = createPlayerId();
+      window.localStorage.setItem(PLAYER_ID_KEY, storedPlayerId);
+    }
+
+    setPlayerId(storedPlayerId);
 
     if (storedName) {
       setPlayerName(storedName);
@@ -214,7 +247,7 @@ export function NokiaSnakeGame() {
     }
   }, [game.score, highScore]);
 
-  async function submitScore(score: number, name: string) {
+  async function submitScore(score: number, name: string, nextPlayerId: string) {
     try {
       setSaveState("saving");
       const response = await fetch("/api/scores", {
@@ -222,7 +255,7 @@ export function NokiaSnakeGame() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ name, score })
+        body: JSON.stringify({ playerId: nextPlayerId, name, score })
       });
 
       if (!response.ok) {
@@ -237,7 +270,7 @@ export function NokiaSnakeGame() {
   }
 
   useEffect(() => {
-    if (status !== "gameover" || game.score <= 0 || !playerName) {
+    if (status !== "gameover" || game.score <= 0 || !playerName || !playerId) {
       return;
     }
 
@@ -247,13 +280,31 @@ export function NokiaSnakeGame() {
 
     lastSavedRoundRef.current = currentRoundRef.current;
     setLastFinishedScore(game.score);
-    void submitScore(game.score, playerName);
-  }, [game.score, playerName, status]);
+    void submitScore(game.score, playerName, playerId);
+  }, [game.score, playerId, playerName, status]);
 
   function focusScreen() {
     window.requestAnimationFrame(() => {
       screenRef.current?.focus();
     });
+  }
+
+  function openLeaderboard() {
+    setPanelView("leaderboard");
+    setShowFullLeaderboard(false);
+    void loadLeaderboard();
+    focusScreen();
+  }
+
+  function closeLeaderboard() {
+    setPanelView("menu");
+    focusScreen();
+  }
+
+  function openNamePrompt() {
+    setIsNaming(true);
+    setPanelView("menu");
+    focusScreen();
   }
 
   function applyGame(nextGame: GameState) {
@@ -276,12 +327,14 @@ export function NokiaSnakeGame() {
 
   function beginGame(openingDirection?: Direction) {
     if (!playerName) {
-      focusScreen();
+      openNamePrompt();
       return;
     }
 
     currentRoundRef.current += 1;
     setSaveState("idle");
+    setPanelView("menu");
+    setIsNaming(false);
     resetGame("playing", openingDirection);
   }
 
@@ -292,10 +345,22 @@ export function NokiaSnakeGame() {
       return;
     }
 
+    let nextPlayerId = playerId;
+
+    if (!nextPlayerId) {
+      nextPlayerId = createPlayerId();
+      setPlayerId(nextPlayerId);
+      window.localStorage.setItem(PLAYER_ID_KEY, nextPlayerId);
+    }
+
     setPlayerName(nextName);
     setNameInput(nextName);
     window.localStorage.setItem(PLAYER_NAME_KEY, nextName);
-    beginGame();
+    currentRoundRef.current += 1;
+    setSaveState("idle");
+    setPanelView("menu");
+    setIsNaming(false);
+    resetGame("playing");
   }
 
   function queueDirection(nextDirection: Direction) {
@@ -311,7 +376,7 @@ export function NokiaSnakeGame() {
   function handleDirectionInput(nextDirection: Direction) {
     const currentStatus = statusRef.current;
 
-    if (!playerName || currentStatus === "paused") {
+    if (!playerName || isNaming || panelView === "leaderboard" || currentStatus === "paused") {
       return;
     }
 
@@ -327,13 +392,39 @@ export function NokiaSnakeGame() {
     return KEY_TO_DIRECTION[event.code] ?? KEY_TO_DIRECTION[event.key] ?? null;
   }
 
-  function handleKeyboardEvent(event: Pick<KeyboardEvent, "code" | "key" | "preventDefault">) {
+  function isTypingTarget(target: EventTarget | null) {
+    if (!(target instanceof HTMLElement)) {
+      return false;
+    }
+
+    const tagName = target.tagName;
+    return (
+      tagName === "INPUT" ||
+      tagName === "TEXTAREA" ||
+      tagName === "SELECT" ||
+      target.isContentEditable
+    );
+  }
+
+  function handleKeyboardEvent(
+    event: Pick<KeyboardEvent, "code" | "key" | "preventDefault" | "target">
+  ) {
+    if (isTypingTarget(event.target)) {
+      return;
+    }
+
     const currentStatus = statusRef.current;
 
     if (event.code === "Space" || event.key === " ") {
       event.preventDefault();
 
+      if (panelView === "leaderboard") {
+        closeLeaderboard();
+        return;
+      }
+
       if (!playerName) {
+        openNamePrompt();
         return;
       }
 
@@ -355,14 +446,28 @@ export function NokiaSnakeGame() {
       return;
     }
 
+    if (event.code === "Escape" || event.key === "Escape") {
+      if (panelView === "leaderboard") {
+        event.preventDefault();
+        closeLeaderboard();
+      }
+      return;
+    }
+
     if (event.code === "Enter" || event.key === "Enter") {
-      if (!playerName && normalizePlayerName(nameInput)) {
+      if (isNaming && normalizePlayerName(nameInput)) {
         event.preventDefault();
         commitNameAndStart();
         return;
       }
 
-      if (currentStatus === "idle" || currentStatus === "gameover") {
+      if (panelView === "leaderboard") {
+        event.preventDefault();
+        closeLeaderboard();
+        return;
+      }
+
+      if (playerName && (currentStatus === "idle" || currentStatus === "gameover")) {
         event.preventDefault();
         beginGame();
       }
@@ -386,7 +491,7 @@ export function NokiaSnakeGame() {
 
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
-  }, [nameInput, playerName]);
+  }, [isNaming, nameInput, panelView, playerName]);
 
   useEffect(() => {
     if (status !== "playing") {
@@ -407,6 +512,7 @@ export function NokiaSnakeGame() {
 
       if (hitSelf) {
         setGameStatus("gameover");
+        setPanelView("menu");
         return;
       }
 
@@ -450,6 +556,26 @@ export function NokiaSnakeGame() {
 
   const normalizedName = normalizePlayerName(nameInput);
   const startDisabled = normalizedName.length === 0;
+  const overlayTitle =
+    status === "gameover"
+      ? "Game over"
+      : status === "paused"
+        ? "Paused"
+        : status === "idle"
+          ? "Potato Snake"
+          : "";
+  const overlayBody =
+    status === "gameover"
+      ? `Score ${lastFinishedScore}. ${saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved to leaderboard." : saveState === "error" ? "Save failed." : "Try again."}`
+      : status === "paused"
+        ? "Press resume or space to continue."
+        : playerName
+          ? "Press Start Game to play or open the leaderboard."
+          : "Choose Start Game to enter your name.";
+  const displayedLeaderboard = showFullLeaderboard
+    ? leaderboard
+    : leaderboard.slice(0, LEADERBOARD_PREVIEW_COUNT);
+  const showStatusOverlay = status !== "playing" && !isNaming && panelView !== "leaderboard";
 
   return (
     <section className="nokia-stage">
@@ -478,65 +604,136 @@ export function NokiaSnakeGame() {
           >
             {cells}
 
-            {status !== "playing" ? (
+            {showStatusOverlay ? (
               <div className="screen-overlay">
-                <p>
-                  {status === "gameover"
-                    ? "Game over"
-                    : playerName
-                      ? "Ready"
-                      : "Enter name"}
-                </p>
-                <span>
-                  {status === "gameover"
-                    ? `Score ${lastFinishedScore}. ${saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved to leaderboard." : saveState === "error" ? "Save failed." : "Try again."}`
-                    : playerName
-                      ? "Press start or any direction to play."
-                      : "Add your name in the menu to begin."}
-                </span>
+                <p>{overlayTitle}</p>
+                <span>{overlayBody}</span>
+              </div>
+            ) : null}
+
+            {panelView === "leaderboard" ? (
+              <div className="display-overlay" onPointerDown={(event) => event.stopPropagation()}>
+                <div className="display-card leaderboard-display">
+                  <div className="display-card-top">
+                    <div>
+                      <p className="name-card-kicker">Hall of fame</p>
+                      <h3>{showFullLeaderboard ? "Top 100" : "Top 10"}</h3>
+                    </div>
+                    <button className="action-button secondary mini" onClick={closeLeaderboard} type="button">
+                      Back
+                    </button>
+                  </div>
+
+                  <div className="leaderboard-shell in-display">
+                    {leaderboardState === "loading" ? <p className="menu-empty">Loading leaderboard...</p> : null}
+                    {leaderboardState === "error" ? <p className="menu-empty">Leaderboard is unavailable right now.</p> : null}
+                    {leaderboardState === "ready" && leaderboard.length === 0 ? (
+                      <p className="menu-empty">No scores yet. Be the first topper.</p>
+                    ) : null}
+
+                    {leaderboardState === "ready" && leaderboard.length > 0 ? (
+                      <>
+                        <ol className="leaderboard-list in-display">
+                          {displayedLeaderboard.map((entry, index) => {
+                            const rank = index + 1;
+                            const isTopThree = rank <= 3;
+
+                            return (
+                              <li className={`leaderboard-item ${isTopThree ? `top-${rank}` : ""}`} key={`${entry.name}-${rank}`}>
+                                <div className="leaderboard-rank">
+                                  {isTopThree ? (
+                                    <>
+                                      <CrownIcon rank={rank} />
+                                      <span className={`rank-tag rank-${rank}`}>{rankLabel(rank)}</span>
+                                    </>
+                                  ) : (
+                                    <span className="rank-number">{rank.toString().padStart(2, "0")}</span>
+                                  )}
+                                </div>
+                                <span className="leaderboard-name">{entry.name}</span>
+                                <span className="leaderboard-score">{entry.score}</span>
+                              </li>
+                            );
+                          })}
+                        </ol>
+
+                        {leaderboard.length > LEADERBOARD_PREVIEW_COUNT ? (
+                          <button
+                            className="action-button secondary"
+                            onClick={() => setShowFullLeaderboard((current) => !current)}
+                            type="button"
+                          >
+                            {showFullLeaderboard ? "Show Less" : "Show More"}
+                          </button>
+                        ) : null}
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            {isNaming ? (
+              <div className="name-overlay" onPointerDown={(event) => event.stopPropagation()}>
+                <form
+                  className="name-card"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    commitNameAndStart();
+                  }}
+                >
+                  <p className="name-card-kicker">Player entry</p>
+                  <h3>Enter name</h3>
+                  <input
+                    className="name-input"
+                    maxLength={24}
+                    onChange={(event) => setNameInput(event.target.value)}
+                    onKeyDown={(event) => event.stopPropagation()}
+                    placeholder="Player"
+                    ref={nameInputRef}
+                    value={nameInput}
+                  />
+                  <div className="name-card-actions">
+                    <button className="action-button" disabled={startDisabled} type="submit">
+                      Begin Run
+                    </button>
+                    <button className="action-button secondary" onClick={() => setIsNaming(false)} type="button">
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </div>
             ) : null}
           </div>
 
           <div className="screen-bottom">
-            <span>{status === "playing" ? "Moving" : "Waiting"}</span>
+            <span>{status === "playing" ? "Moving" : panelView === "leaderboard" ? "Records" : "Waiting"}</span>
             <span>Best {highScore.toString().padStart(2, "0")}</span>
           </div>
         </div>
 
         <div className="controls-panel">
-          <form
-            className="name-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              commitNameAndStart();
-            }}
-          >
-            <label className="menu-label" htmlFor="player-name">
-              Your name
-            </label>
-            <div className="name-row">
-              <input
-                className="name-input"
-                id="player-name"
-                maxLength={24}
-                onChange={(event) => setNameInput(event.target.value)}
-                placeholder="Player"
-                value={nameInput}
-              />
-              <button className="action-button" disabled={startDisabled} type="submit">
-                {playerName ? "Play" : "Start"}
-              </button>
-            </div>
-          </form>
+          <div className="control-actions two-wide">
+            <button className="action-button" onClick={() => beginGame()} type="button">
+              Start Game
+            </button>
+            <button className="action-button secondary" onClick={openLeaderboard} type="button">
+              Leaderboard
+            </button>
+          </div>
 
-          <div className="control-actions">
+          <div className="control-actions two-wide">
             <button className="action-button secondary" onClick={() => beginGame()} type="button">
-              {status === "gameover" ? "Retry" : "New run"}
+              {status === "gameover" ? "Retry" : "Quick Start"}
             </button>
             <button
               className="action-button secondary"
               onClick={() => {
+                if (panelView === "leaderboard") {
+                  closeLeaderboard();
+                  return;
+                }
+
                 if (statusRef.current === "playing") {
                   setGameStatus("paused");
                   return;
@@ -549,7 +746,7 @@ export function NokiaSnakeGame() {
               }}
               type="button"
             >
-              {status === "paused" ? "Resume" : "Pause"}
+              {panelView === "leaderboard" ? "Close" : status === "paused" ? "Resume" : "Pause"}
             </button>
           </div>
 
@@ -589,47 +786,6 @@ export function NokiaSnakeGame() {
           </div>
         </div>
       </div>
-
-      <aside className="menu-panel">
-        <div className="menu-header">
-          <p className="menu-kicker">Hall of fame</p>
-          <h2>Top 100</h2>
-        </div>
-
-        <div className="leaderboard-shell">
-          {leaderboardState === "loading" ? <p className="menu-empty">Loading leaderboard...</p> : null}
-          {leaderboardState === "error" ? <p className="menu-empty">Leaderboard is unavailable right now.</p> : null}
-          {leaderboardState === "ready" && leaderboard.length === 0 ? (
-            <p className="menu-empty">No scores yet. Be the first topper.</p>
-          ) : null}
-
-          {leaderboardState === "ready" && leaderboard.length > 0 ? (
-            <ol className="leaderboard-list">
-              {leaderboard.map((entry, index) => {
-                const rank = index + 1;
-                const isTopThree = rank <= 3;
-
-                return (
-                  <li className={`leaderboard-item ${isTopThree ? `top-${rank}` : ""}`} key={`${entry.name}-${rank}`}>
-                    <div className="leaderboard-rank">
-                      {isTopThree ? (
-                        <>
-                          <CrownIcon rank={rank} />
-                          <span className={`rank-tag rank-${rank}`}>{rankLabel(rank)}</span>
-                        </>
-                      ) : (
-                        <span className="rank-number">{rank.toString().padStart(2, "0")}</span>
-                      )}
-                    </div>
-                    <span className="leaderboard-name">{entry.name}</span>
-                    <span className="leaderboard-score">{entry.score}</span>
-                  </li>
-                );
-              })}
-            </ol>
-          ) : null}
-        </div>
-      </aside>
     </section>
   );
 }

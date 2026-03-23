@@ -9,25 +9,35 @@ function normalizeName(value: unknown) {
   return value.trim().replace(/\s+/g, " ").slice(0, 24);
 }
 
+function normalizePlayerId(value: unknown) {
+  if (typeof value !== "string") {
+    return "";
+  }
+
+  return value.trim().slice(0, 64);
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
+    const playerId = normalizePlayerId(body?.playerId);
     const name = normalizeName(body?.name);
     const score = Number(body?.score);
 
-    if (!name || Number.isNaN(score) || score <= 0) {
+    if (!playerId || !name || Number.isNaN(score) || score <= 0) {
       return NextResponse.json({ error: "Invalid score payload." }, { status: 400 });
     }
 
     const collection = await getScoresCollection();
     const now = new Date();
+    const nextScore = Math.floor(score);
 
     await collection.updateOne(
-      { name },
+      { playerId },
       {
-        $max: { score: Math.floor(score) },
-        $set: { updatedAt: now },
-        $setOnInsert: { createdAt: now, name }
+        $max: { score: nextScore },
+        $set: { name, updatedAt: now },
+        $setOnInsert: { createdAt: now, playerId }
       },
       { upsert: true }
     );
