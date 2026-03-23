@@ -20,6 +20,9 @@
   --control-face-alt: #1d2632;
   --control-edge: #5d6b81;
   --control-label: #f2f6ff;
+  --gold: #e7c96a;
+  --silver: #c9d0db;
+  --bronze: #b98a57;
 }
 
 * {
@@ -41,7 +44,8 @@ body {
     linear-gradient(180deg, #06080d 0%, var(--bg-night) 45%, #040507 100%);
 }
 
-button {
+button,
+input {
   font: inherit;
 }
 
@@ -84,13 +88,16 @@ button {
 }
 
 .nokia-stage {
-  width: 100%;
-  display: flex;
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 430px) minmax(0, 360px);
+  gap: 1.4rem;
   justify-content: center;
+  align-items: start;
 }
 
 .phone-frame {
-  width: min(430px, 100%);
+  width: 100%;
   padding: 1.3rem 1rem 1.4rem;
   border-radius: 2rem;
   background:
@@ -180,8 +187,7 @@ button {
 }
 
 .game-cell.is-head::after {
-  background:
-    linear-gradient(180deg, #4f6542 0%, #2f4227 100%);
+  background: linear-gradient(180deg, #4f6542 0%, #2f4227 100%);
   box-shadow:
     inset 0 1px 0 rgba(220, 255, 201, 0.24),
     inset -1px -1px 0 rgba(10, 14, 8, 0.55),
@@ -234,7 +240,7 @@ button {
 }
 
 .screen-overlay span {
-  max-width: 22ch;
+  max-width: 24ch;
   margin-top: 0.7rem;
   font-size: 0.75rem;
   line-height: 1.5;
@@ -245,6 +251,57 @@ button {
   margin-top: 1.25rem;
   display: grid;
   gap: 1rem;
+}
+
+.name-form,
+.menu-panel {
+  border-radius: 1rem;
+  border: 1px solid rgba(116, 135, 167, 0.28);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 15%),
+    linear-gradient(180deg, rgba(18, 25, 36, 0.98) 0%, rgba(12, 17, 24, 0.98) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 18px 35px rgba(0, 0, 0, 0.28);
+}
+
+.name-form {
+  padding: 0.9rem;
+}
+
+.menu-label,
+.menu-kicker {
+  display: block;
+  margin: 0 0 0.55rem;
+  color: #8ea1bf;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.72rem;
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.7rem;
+}
+
+.name-input {
+  min-width: 0;
+  padding: 0.8rem 0.9rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(111, 129, 161, 0.45);
+  outline: none;
+  color: #f3f7ff;
+  background: rgba(10, 14, 20, 0.88);
+}
+
+.name-input::placeholder {
+  color: #687c99;
+}
+
+.name-input:focus {
+  border-color: #8ea67a;
+  box-shadow: 0 0 0 2px rgba(142, 166, 122, 0.18);
 }
 
 .control-actions {
@@ -281,6 +338,11 @@ button {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 16%),
     linear-gradient(180deg, #212935 0%, #181f29 100%);
+}
+
+.action-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .dpad {
@@ -326,6 +388,124 @@ button {
   transform: translateY(1px);
 }
 
+.menu-panel {
+  padding: 1rem;
+}
+
+.menu-header h2 {
+  margin: 0;
+  font-size: 1.8rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.leaderboard-shell {
+  margin-top: 0.9rem;
+}
+
+.menu-empty {
+  margin: 0;
+  padding: 1rem 0.2rem;
+  color: var(--text-muted);
+}
+
+.leaderboard-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.45rem;
+  max-height: 690px;
+  overflow: auto;
+}
+
+.leaderboard-item {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  padding: 0.72rem 0.85rem;
+  border-radius: 0.9rem;
+  background: rgba(17, 24, 33, 0.88);
+  border: 1px solid rgba(89, 107, 130, 0.28);
+}
+
+.leaderboard-item.top-1 {
+  background: rgba(54, 45, 18, 0.92);
+}
+
+.leaderboard-item.top-2 {
+  background: rgba(39, 44, 52, 0.92);
+}
+
+.leaderboard-item.top-3 {
+  background: rgba(52, 35, 22, 0.92);
+}
+
+.leaderboard-rank {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.rank-number,
+.rank-tag {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.rank-number {
+  color: #9aaecb;
+}
+
+.rank-tag {
+  padding: 0.25rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.rank-tag.rank-1 {
+  color: var(--gold);
+}
+
+.rank-tag.rank-2 {
+  color: var(--silver);
+}
+
+.rank-tag.rank-3 {
+  color: var(--bronze);
+}
+
+.crown-icon {
+  width: 22px;
+  height: 16px;
+}
+
+.crown-icon.rank-1 {
+  color: var(--gold);
+}
+
+.crown-icon.rank-2 {
+  color: var(--silver);
+}
+
+.crown-icon.rank-3 {
+  color: var(--bronze);
+}
+
+.leaderboard-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaderboard-score {
+  color: #f4f7ff;
+  font-weight: 700;
+}
+
 @keyframes pulseDot {
   0%,
   100% {
@@ -336,6 +516,21 @@ button {
   50% {
     opacity: 1;
     transform: scale(1);
+  }
+}
+
+@media (max-width: 960px) {
+  .nokia-stage {
+    grid-template-columns: minmax(0, 430px);
+  }
+
+  .menu-panel {
+    width: 100%;
+    max-width: 430px;
+  }
+
+  .leaderboard-list {
+    max-height: 420px;
   }
 }
 
@@ -361,5 +556,12 @@ button {
     font-size: 0.68rem;
     letter-spacing: 0.1em;
   }
-}
 
+  .name-row {
+    grid-template-columns: 1fr;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+}

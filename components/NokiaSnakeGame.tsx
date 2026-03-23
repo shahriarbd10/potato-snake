@@ -10,6 +10,8 @@ type Position = {
 
 type Direction = "up" | "down" | "left" | "right";
 type GameStatus = "idle" | "playing" | "paused" | "gameover";
+type SaveState = "idle" | "saving" | "saved" | "error";
+type LeaderboardState = "loading" | "ready" | "error";
 type GameState = {
   snake: Position[];
   direction: Direction;
@@ -17,8 +19,14 @@ type GameState = {
   score: number;
 };
 
+type LeaderboardEntry = {
+  name: string;
+  score: number;
+};
+
 const GRID_WIDTH = 18;
 const GRID_HEIGHT = 24;
+const PLAYER_NAME_KEY = "potato-snake-player-name";
 const INITIAL_SNAKE: Position[] = [
   { x: 7, y: 12 },
   { x: 6, y: 12 },
@@ -57,6 +65,10 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
   S: "down",
   D: "right"
 };
+
+function normalizePlayerName(value: string) {
+  return value.trim().replace(/\s+/g, " ").slice(0, 24);
+}
 
 function randomFood(snake: Position[]) {
   const taken = new Set(snake.map((segment) => `${segment.x},${segment.y}`));
@@ -109,14 +121,47 @@ function createInitialGame(direction: Direction = INITIAL_DIRECTION): GameState 
   };
 }
 
+function rankLabel(rank: number) {
+  if (rank === 1) {
+    return "1st";
+  }
+
+  if (rank === 2) {
+    return "2nd";
+  }
+
+  if (rank === 3) {
+    return "3rd";
+  }
+
+  return `${rank}th`;
+}
+
+function CrownIcon({ rank }: { rank: number }) {
+  return (
+    <svg aria-hidden="true" className={`crown-icon rank-${rank}`} viewBox="0 0 48 32">
+      <path d="M5 25 8 7l10 9 6-11 6 11 10-9 3 18Z" fill="currentColor" />
+      <path d="M8 27h32" fill="none" stroke="currentColor" strokeWidth="3" />
+    </svg>
+  );
+}
+
 export function NokiaSnakeGame() {
   const [game, setGame] = useState<GameState>(() => createInitialGame());
   const [status, setStatus] = useState<GameStatus>("idle");
   const [highScore, setHighScore] = useState(0);
+  const [playerName, setPlayerName] = useState("");
+  const [nameInput, setNameInput] = useState("");
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboardState, setLeaderboardState] = useState<LeaderboardState>("loading");
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [lastFinishedScore, setLastFinishedScore] = useState(0);
   const screenRef = useRef<HTMLDivElement>(null);
   const gameRef = useRef<GameState>(createInitialGame());
   const statusRef = useRef<GameStatus>("idle");
   const pendingDirectionRef = useRef<Direction | null>(null);
+  const currentRoundRef = useRef(0);
+  const lastSavedRoundRef = useRef(0);
 
   const speed = Math.max(95, 190 - game.score * 6);
 
@@ -128,12 +173,38 @@ export function NokiaSnakeGame() {
     statusRef.current = status;
   }, [status]);
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem("potato-snake-high-score");
-    if (stored) {
-      setHighScore(Number.parseInt(stored, 10) || 0);
+  async function loadLeaderboard() {
+    try {
+      setLeaderboardState("loading");
+      const response = await fetch("/api/leaderboard", { cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error("Failed to load leaderboard");
+      }
+
+      const data = (await response.json()) as { scores?: LeaderboardEntry[] };
+      setLeaderboard(data.scores ?? []);
+      setLeaderboardState("ready");
+    } catch {
+      setLeaderboardState("error");
     }
+  }
+
+  useEffect(() => {
+    const storedHighScore = window.localStorage.getItem("potato-snake-high-score");
+    const storedName = window.localStorage.getItem(PLAYER_NAME_KEY) ?? "";
+
+    if (storedHighScore) {
+      setHighScore(Number.parseInt(storedHighScore, 10) || 0);
+    }
+
+    if (storedName) {
+      setPlayerName(storedName);
+      setNameInput(storedName);
+    }
+
     screenRef.current?.focus();
+    void loadLeaderboard();
   }, []);
 
   useEffect(() => {
@@ -142,6 +213,42 @@ export function NokiaSnakeGame() {
       window.localStorage.setItem("potato-snake-high-score", String(game.score));
     }
   }, [game.score, highScore]);
+
+  async function submitScore(score: number, name: string) {
+    try {
+      setSaveState("saving");
+      const response = await fetch("/api/scores", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ name, score })
+      });
+
+      if (!response.ok) {
+        throw new Error("Save failed");
+      }
+
+      setSaveState("saved");
+      await loadLeaderboard();
+    } catch {
+      setSaveState("error");
+    }
+  }
+
+  useEffect(() => {
+    if (status !== "gameover" || game.score <= 0 || !playerName) {
+      return;
+    }
+
+    if (lastSavedRoundRef.current === currentRoundRef.current) {
+      return;
+    }
+
+    lastSavedRoundRef.current = currentRoundRef.current;
+    setLastFinishedScore(game.score);
+    void submitScore(game.score, playerName);
+  }, [game.score, playerName, status]);
 
   function focusScreen() {
     window.requestAnimationFrame(() => {
@@ -168,7 +275,27 @@ export function NokiaSnakeGame() {
   }
 
   function beginGame(openingDirection?: Direction) {
+    if (!playerName) {
+      focusScreen();
+      return;
+    }
+
+    currentRoundRef.current += 1;
+    setSaveState("idle");
     resetGame("playing", openingDirection);
+  }
+
+  function commitNameAndStart() {
+    const nextName = normalizePlayerName(nameInput);
+
+    if (!nextName) {
+      return;
+    }
+
+    setPlayerName(nextName);
+    setNameInput(nextName);
+    window.localStorage.setItem(PLAYER_NAME_KEY, nextName);
+    beginGame();
   }
 
   function queueDirection(nextDirection: Direction) {
@@ -184,7 +311,7 @@ export function NokiaSnakeGame() {
   function handleDirectionInput(nextDirection: Direction) {
     const currentStatus = statusRef.current;
 
-    if (currentStatus === "paused") {
+    if (!playerName || currentStatus === "paused") {
       return;
     }
 
@@ -206,6 +333,10 @@ export function NokiaSnakeGame() {
     if (event.code === "Space" || event.key === " ") {
       event.preventDefault();
 
+      if (!playerName) {
+        return;
+      }
+
       if (currentStatus === "idle" || currentStatus === "gameover") {
         beginGame();
         return;
@@ -225,6 +356,12 @@ export function NokiaSnakeGame() {
     }
 
     if (event.code === "Enter" || event.key === "Enter") {
+      if (!playerName && normalizePlayerName(nameInput)) {
+        event.preventDefault();
+        commitNameAndStart();
+        return;
+      }
+
       if (currentStatus === "idle" || currentStatus === "gameover") {
         event.preventDefault();
         beginGame();
@@ -249,7 +386,7 @@ export function NokiaSnakeGame() {
 
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
-  }, []);
+  }, [nameInput, playerName]);
 
   useEffect(() => {
     if (status !== "playing") {
@@ -311,14 +448,8 @@ export function NokiaSnakeGame() {
     }
   }
 
-  const overlayText =
-    status === "idle"
-      ? "Press space or tap start"
-      : status === "paused"
-        ? "Paused"
-        : status === "gameover"
-          ? "Game over"
-          : "";
+  const normalizedName = normalizePlayerName(nameInput);
+  const startDisabled = normalizedName.length === 0;
 
   return (
     <section className="nokia-stage">
@@ -328,7 +459,7 @@ export function NokiaSnakeGame() {
         <div className="screen-wrap">
           <div className="screen-topbar">
             <span>Score {game.score.toString().padStart(2, "0")}</span>
-            <span>Best {highScore.toString().padStart(2, "0")}</span>
+            <span>{playerName ? playerName : "Guest"}</span>
           </div>
 
           <div
@@ -347,28 +478,61 @@ export function NokiaSnakeGame() {
           >
             {cells}
 
-            {overlayText ? (
+            {status !== "playing" ? (
               <div className="screen-overlay">
-                <p>{overlayText}</p>
+                <p>
+                  {status === "gameover"
+                    ? "Game over"
+                    : playerName
+                      ? "Ready"
+                      : "Enter name"}
+                </p>
                 <span>
                   {status === "gameover"
-                    ? "Restart and chase a longer pixel trail."
-                    : "Use the keys or the control pad."}
+                    ? `Score ${lastFinishedScore}. ${saveState === "saving" ? "Saving..." : saveState === "saved" ? "Saved to leaderboard." : saveState === "error" ? "Save failed." : "Try again."}`
+                    : playerName
+                      ? "Press start or any direction to play."
+                      : "Add your name in the menu to begin."}
                 </span>
               </div>
             ) : null}
           </div>
 
           <div className="screen-bottom">
-            <span>{status === "playing" ? "Moving" : "Ready"}</span>
-            <span>Night play</span>
+            <span>{status === "playing" ? "Moving" : "Waiting"}</span>
+            <span>Best {highScore.toString().padStart(2, "0")}</span>
           </div>
         </div>
 
         <div className="controls-panel">
+          <form
+            className="name-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              commitNameAndStart();
+            }}
+          >
+            <label className="menu-label" htmlFor="player-name">
+              Your name
+            </label>
+            <div className="name-row">
+              <input
+                className="name-input"
+                id="player-name"
+                maxLength={24}
+                onChange={(event) => setNameInput(event.target.value)}
+                placeholder="Player"
+                value={nameInput}
+              />
+              <button className="action-button" disabled={startDisabled} type="submit">
+                {playerName ? "Play" : "Start"}
+              </button>
+            </div>
+          </form>
+
           <div className="control-actions">
-            <button className="action-button" onClick={() => beginGame()} type="button">
-              {status === "gameover" ? "Retry" : "Start"}
+            <button className="action-button secondary" onClick={() => beginGame()} type="button">
+              {status === "gameover" ? "Retry" : "New run"}
             </button>
             <button
               className="action-button secondary"
@@ -385,7 +549,7 @@ export function NokiaSnakeGame() {
               }}
               type="button"
             >
-              {status === "paused" ? "Play" : "Pause"}
+              {status === "paused" ? "Resume" : "Pause"}
             </button>
           </div>
 
@@ -425,7 +589,47 @@ export function NokiaSnakeGame() {
           </div>
         </div>
       </div>
+
+      <aside className="menu-panel">
+        <div className="menu-header">
+          <p className="menu-kicker">Hall of fame</p>
+          <h2>Top 100</h2>
+        </div>
+
+        <div className="leaderboard-shell">
+          {leaderboardState === "loading" ? <p className="menu-empty">Loading leaderboard...</p> : null}
+          {leaderboardState === "error" ? <p className="menu-empty">Leaderboard is unavailable right now.</p> : null}
+          {leaderboardState === "ready" && leaderboard.length === 0 ? (
+            <p className="menu-empty">No scores yet. Be the first topper.</p>
+          ) : null}
+
+          {leaderboardState === "ready" && leaderboard.length > 0 ? (
+            <ol className="leaderboard-list">
+              {leaderboard.map((entry, index) => {
+                const rank = index + 1;
+                const isTopThree = rank <= 3;
+
+                return (
+                  <li className={`leaderboard-item ${isTopThree ? `top-${rank}` : ""}`} key={`${entry.name}-${rank}`}>
+                    <div className="leaderboard-rank">
+                      {isTopThree ? (
+                        <>
+                          <CrownIcon rank={rank} />
+                          <span className={`rank-tag rank-${rank}`}>{rankLabel(rank)}</span>
+                        </>
+                      ) : (
+                        <span className="rank-number">{rank.toString().padStart(2, "0")}</span>
+                      )}
+                    </div>
+                    <span className="leaderboard-name">{entry.name}</span>
+                    <span className="leaderboard-score">{entry.score}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : null}
+        </div>
+      </aside>
     </section>
   );
 }
-
