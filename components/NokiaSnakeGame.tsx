@@ -789,3 +789,4 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+

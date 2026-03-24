@@ -66,3 +66,13 @@ npm run start
 
 - `MONGODB_URI`: MongoDB connection string
 - `MONGODB_DB`: database name, defaults to `potato-snake`
+
+## Vercel Notes
+
+If `/api/leaderboard` or `/api/scores` returns `500` on Vercel:
+
+- Add `MONGODB_URI` in the Vercel project environment variables
+- Add `MONGODB_DB=potato-snake`
+- Redeploy after saving the environment variables
+- In MongoDB Atlas, make sure the cluster allows connections from Vercel. If needed, temporarily allow `0.0.0.0/0` for testing
+- Check Vercel function logs after redeploy. The API routes now log the real MongoDB error message

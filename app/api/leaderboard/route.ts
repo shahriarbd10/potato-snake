@@ -11,7 +11,8 @@ export async function GET() {
       .toArray();
 
     return NextResponse.json({ scores });
-  } catch {
+  } catch (error) {
+    console.error("Leaderboard API error", error);
     return NextResponse.json({ error: "Unable to load leaderboard." }, { status: 500 });
   }
 }
