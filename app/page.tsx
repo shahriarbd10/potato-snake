@@ -13,6 +13,11 @@ export default function Home() {
       </section>
 
       <NokiaSnakeGame />
+
+      <p className="ownership-note">(c) 2026 Shahriar | All rights reserved | github.com/shahriarbd10</p>
     </main>
   );
 }
+
+
+

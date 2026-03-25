@@ -76,3 +76,16 @@ If `/api/leaderboard` or `/api/scores` returns `500` on Vercel:
 - Redeploy after saving the environment variables
 - In MongoDB Atlas, make sure the cluster allows connections from Vercel. If needed, temporarily allow `0.0.0.0/0` for testing
 - Check Vercel function logs after redeploy. The API routes now log the real MongoDB error message
+
+
+## Copyright & License
+
+- Copyright (c) 2026 Shahriar
+- All rights reserved. This project is proprietary.
+- No copying, redistribution, or derivative use without written permission.
+
+Owner links:
+- LinkedIn: https://www.linkedin.com/in/shahriarbd10/
+- GitHub: https://github.com/shahriarbd10
+
+

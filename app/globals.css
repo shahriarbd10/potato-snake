@@ -856,3 +856,20 @@ input {
 
 
 
+
+.ownership-note {
+  margin: 0.65rem 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: rgba(173, 190, 220, 0.75);
+}
+
+@media (max-width: 640px) {
+  .ownership-note {
+    margin-top: 0.3rem;
+    font-size: 0.52rem;
+  }
+}
+
+
