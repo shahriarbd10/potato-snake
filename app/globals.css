@@ -152,6 +152,41 @@ input {
   margin-top: 0.55rem;
 }
 
+.screen-bottom-right {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.screen-menu-button {
+  width: 1.7rem;
+  height: 1.35rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(149, 170, 204, 0.5);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.11), rgba(25, 36, 52, 0.9));
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 2px 8px rgba(4, 8, 14, 0.45);
+}
+
+.screen-menu-button .menu-icon {
+  gap: 0.15rem;
+}
+
+.screen-menu-button .menu-icon span {
+  width: 0.62rem;
+  height: 2px;
+}
+
+.screen-menu-button:active {
+  transform: translateY(1px);
+}
+
 .game-screen {
   position: relative;
   display: grid;
@@ -444,7 +479,7 @@ input {
   gap: 0.45rem;
   grid-template-areas:
     ". up ."
-    "left . right"
+    "left center right"
     ". down .";
 }
 
@@ -472,6 +507,12 @@ input {
 
 .dpad-button.down {
   grid-area: down;
+}
+
+.dpad-button.center {
+  grid-area: center;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
 }
 
 .action-button:active,
@@ -646,6 +687,16 @@ input {
     letter-spacing: 0.05em;
   }
 
+  .screen-bottom-right {
+    gap: 0.26rem;
+  }
+
+  .screen-menu-button {
+    width: 1.5rem;
+    height: 1.2rem;
+    border-radius: 0.4rem;
+  }
+
   .screen-topbar {
     margin-bottom: 0.22rem;
   }
@@ -723,6 +774,11 @@ input {
     font-size: 0.45rem;
   }
 
+  .screen-menu-button {
+    width: 1.42rem;
+    height: 1.14rem;
+  }
+
   .controls-panel {
     margin-top: 0.22rem;
     gap: 0.24rem;
@@ -754,4 +810,10 @@ input {
     padding: 0.5rem;
   }
 }
+
+
+
+
+
+
 

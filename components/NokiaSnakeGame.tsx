@@ -171,6 +171,7 @@ export function NokiaSnakeGame() {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [lastFinishedScore, setLastFinishedScore] = useState(0);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
+  const [showRunMenu, setShowRunMenu] = useState(false);
   const screenRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const gameRef = useRef<GameState>(createInitialGame());
@@ -290,6 +291,7 @@ export function NokiaSnakeGame() {
   }
 
   function openLeaderboard() {
+    setShowRunMenu(false);
     setPanelView("leaderboard");
     setShowFullLeaderboard(false);
     void loadLeaderboard();
@@ -298,10 +300,12 @@ export function NokiaSnakeGame() {
 
   function closeLeaderboard() {
     setPanelView("menu");
+    setShowRunMenu(false);
     focusScreen();
   }
 
   function openNamePrompt() {
+    setShowRunMenu(false);
     setIsNaming(true);
     setPanelView("menu");
     focusScreen();
@@ -333,6 +337,7 @@ export function NokiaSnakeGame() {
 
     currentRoundRef.current += 1;
     setSaveState("idle");
+    setShowRunMenu(false);
     setPanelView("menu");
     setIsNaming(false);
     resetGame("playing", openingDirection);
@@ -358,6 +363,7 @@ export function NokiaSnakeGame() {
     window.localStorage.setItem(PLAYER_NAME_KEY, nextName);
     currentRoundRef.current += 1;
     setSaveState("idle");
+    setShowRunMenu(false);
     setPanelView("menu");
     setIsNaming(false);
     resetGame("playing");
@@ -376,7 +382,7 @@ export function NokiaSnakeGame() {
   function handleDirectionInput(nextDirection: Direction) {
     const currentStatus = statusRef.current;
 
-    if (!playerName || isNaming || panelView === "leaderboard" || currentStatus === "paused") {
+    if (!playerName || isNaming || showRunMenu || panelView === "leaderboard" || currentStatus === "paused") {
       return;
     }
 
@@ -434,11 +440,13 @@ export function NokiaSnakeGame() {
       }
 
       if (currentStatus === "playing") {
+        setShowRunMenu(false);
         setGameStatus("paused");
         return;
       }
 
       if (currentStatus === "paused") {
+        setShowRunMenu(false);
         setGameStatus("playing");
         focusScreen();
       }
@@ -491,7 +499,7 @@ export function NokiaSnakeGame() {
 
     window.addEventListener("keydown", handleKeydown);
     return () => window.removeEventListener("keydown", handleKeydown);
-  }, [isNaming, nameInput, panelView, playerName]);
+  }, [isNaming, nameInput, panelView, playerName, showRunMenu]);
 
   useEffect(() => {
     if (status !== "playing") {
@@ -511,6 +519,7 @@ export function NokiaSnakeGame() {
       );
 
       if (hitSelf) {
+        setShowRunMenu(false);
         setGameStatus("gameover");
         setPanelView("menu");
         return;
@@ -577,7 +586,6 @@ export function NokiaSnakeGame() {
     : leaderboard.slice(0, LEADERBOARD_PREVIEW_COUNT);
   const showStatusOverlay = status !== "playing" && !isNaming && panelView !== "leaderboard";
   const inRunMode = status === "playing" || status === "paused";
-  const playingOnlyMode = status === "playing";
 
   return (
     <section className="nokia-stage">
@@ -610,6 +618,77 @@ export function NokiaSnakeGame() {
               <div className="screen-overlay">
                 <p>{overlayTitle}</p>
                 <span>{overlayBody}</span>
+              </div>
+            ) : null}
+
+            {showRunMenu ? (
+              <div className="display-overlay" onPointerDown={(event) => event.stopPropagation()}>
+                <div className="display-card">
+                  <div className="display-card-top">
+                    <div>
+                      <p className="name-card-kicker">Run menu</p>
+                      <h3>Options</h3>
+                    </div>
+                    <button
+                      className="action-button secondary mini"
+                      onClick={() => {
+                        setShowRunMenu(false);
+                        focusScreen();
+                      }}
+                      type="button"
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  <div className="control-actions two-wide">
+                    <button
+                      className="action-button secondary"
+                      onClick={() => {
+                        setShowRunMenu(false);
+                        openLeaderboard();
+                      }}
+                      type="button"
+                    >
+                      Leaderboard
+                    </button>
+                    <button
+                      className="action-button secondary"
+                      onClick={() => {
+                        beginGame();
+                        setShowRunMenu(false);
+                      }}
+                      type="button"
+                    >
+                      Quick Start
+                    </button>
+                    <button
+                      className="action-button secondary"
+                      onClick={() => {
+                        if (statusRef.current === "playing") {
+                          setGameStatus("paused");
+                        } else if (statusRef.current === "paused") {
+                          setGameStatus("playing");
+                          focusScreen();
+                        }
+                        setShowRunMenu(false);
+                      }}
+                      type="button"
+                    >
+                      {status === "paused" ? "Resume" : "Pause"}
+                    </button>
+                    <button
+                      className="action-button secondary"
+                      onClick={() => {
+                        setShowRunMenu(false);
+                        focusScreen();
+                      }}
+                      type="button"
+                    >
+                      Back
+                    </button>
+                  </div>
+                </div>
               </div>
             ) : null}
 
@@ -710,73 +789,36 @@ export function NokiaSnakeGame() {
 
           <div className="screen-bottom">
             <span>{status === "playing" ? "Moving" : panelView === "leaderboard" ? "Records" : "Waiting"}</span>
-            <span>Best {highScore.toString().padStart(2, "0")}</span>
+            <div className="screen-bottom-right">
+              <span>Best {highScore.toString().padStart(2, "0")}</span>
+              {inRunMode ? (
+                <button
+                  aria-label="Open menu"
+                  className="screen-menu-button"
+                  onClick={() => {
+                    if (panelView === "leaderboard") {
+                      closeLeaderboard();
+                      return;
+                    }
+
+                    setShowRunMenu((current) => !current);
+                    focusScreen();
+                  }}
+                  type="button"
+                >
+                  <span aria-hidden="true" className="menu-icon">
+                    <span />
+                    <span />
+                    <span />
+                  </span>
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
 
         <div className="controls-panel">
-          {playingOnlyMode ? (
-            <div className="control-actions single run-row">
-              <button
-                aria-label="Open menu"
-                className="action-button secondary menu-toggle"
-                onClick={() => {
-                  if (panelView === "leaderboard") {
-                    closeLeaderboard();
-                    return;
-                  }
-
-                  openLeaderboard();
-                }}
-                type="button"
-              >
-                <span aria-hidden="true" className="menu-icon">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </button>
-            </div>
-          ) : inRunMode ? (
-            <div className="control-actions two-wide run-row">
-              <button
-                aria-label="Open menu"
-                className="action-button secondary menu-toggle"
-                onClick={() => {
-                  if (panelView === "leaderboard") {
-                    closeLeaderboard();
-                    return;
-                  }
-
-                  openLeaderboard();
-                }}
-                type="button"
-              >
-                <span aria-hidden="true" className="menu-icon">
-                  <span />
-                  <span />
-                  <span />
-                </span>
-              </button>
-              <button
-                className="action-button secondary"
-                onClick={() => {
-                  if (statusRef.current === "playing") {
-                    setGameStatus("paused");
-                    return;
-                  }
-
-                  if (statusRef.current === "paused") {
-                    setGameStatus("playing");
-                    focusScreen();
-                  }
-                }}
-                type="button"
-              >
-                {status === "paused" ? "Resume" : "Pause"}
-              </button>
-            </div>
-          ) : (
+          {inRunMode ? null : (
             <>
               <div className="control-actions two-wide">
                 <button className="action-button" onClick={() => beginGame()} type="button">
@@ -806,7 +848,7 @@ export function NokiaSnakeGame() {
                   }}
                   type="button"
                 >
-                  {panelView === "leaderboard" ? "Close" : "Menu"}
+                  {panelView === "leaderboard" ? "Close" : "Resume"}
                 </button>
               </div>
             </>
@@ -821,6 +863,29 @@ export function NokiaSnakeGame() {
             >
               ^
             </button>
+            {inRunMode ? (
+              <button
+                aria-label={status === "paused" ? "Resume game" : "Pause game"}
+                className="dpad-button center"
+                onPointerDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (statusRef.current === "playing") {
+                    setGameStatus("paused");
+                    setShowRunMenu(false);
+                    return;
+                  }
+
+                  if (statusRef.current === "paused") {
+                    setGameStatus("playing");
+                    setShowRunMenu(false);
+                    focusScreen();
+                  }
+                }}
+                type="button"
+              >
+                {status === "paused" ? ">" : "||"}
+              </button>
+            ) : null}
             <button
               aria-label="Move left"
               className="dpad-button left"
@@ -851,6 +916,14 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
+
+
+
+
+
+
+
 
 
 
