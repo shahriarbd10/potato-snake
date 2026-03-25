@@ -576,6 +576,8 @@ export function NokiaSnakeGame() {
     ? leaderboard
     : leaderboard.slice(0, LEADERBOARD_PREVIEW_COUNT);
   const showStatusOverlay = status !== "playing" && !isNaming && panelView !== "leaderboard";
+  const inRunMode = status === "playing" || status === "paused";
+  const playingOnlyMode = status === "playing";
 
   return (
     <section className="nokia-stage">
@@ -713,42 +715,102 @@ export function NokiaSnakeGame() {
         </div>
 
         <div className="controls-panel">
-          <div className="control-actions two-wide">
-            <button className="action-button" onClick={() => beginGame()} type="button">
-              Start Game
-            </button>
-            <button className="action-button secondary" onClick={openLeaderboard} type="button">
-              Leaderboard
-            </button>
-          </div>
+          {playingOnlyMode ? (
+            <div className="control-actions single run-row">
+              <button
+                aria-label="Open menu"
+                className="action-button secondary menu-toggle"
+                onClick={() => {
+                  if (panelView === "leaderboard") {
+                    closeLeaderboard();
+                    return;
+                  }
 
-          <div className="control-actions two-wide">
-            <button className="action-button secondary" onClick={() => beginGame()} type="button">
-              {status === "gameover" ? "Retry" : "Quick Start"}
-            </button>
-            <button
-              className="action-button secondary"
-              onClick={() => {
-                if (panelView === "leaderboard") {
-                  closeLeaderboard();
-                  return;
-                }
+                  openLeaderboard();
+                }}
+                type="button"
+              >
+                <span aria-hidden="true" className="menu-icon">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </button>
+            </div>
+          ) : inRunMode ? (
+            <div className="control-actions two-wide run-row">
+              <button
+                aria-label="Open menu"
+                className="action-button secondary menu-toggle"
+                onClick={() => {
+                  if (panelView === "leaderboard") {
+                    closeLeaderboard();
+                    return;
+                  }
 
-                if (statusRef.current === "playing") {
-                  setGameStatus("paused");
-                  return;
-                }
+                  openLeaderboard();
+                }}
+                type="button"
+              >
+                <span aria-hidden="true" className="menu-icon">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+              </button>
+              <button
+                className="action-button secondary"
+                onClick={() => {
+                  if (statusRef.current === "playing") {
+                    setGameStatus("paused");
+                    return;
+                  }
 
-                if (statusRef.current === "paused") {
-                  setGameStatus("playing");
-                  focusScreen();
-                }
-              }}
-              type="button"
-            >
-              {panelView === "leaderboard" ? "Close" : status === "paused" ? "Resume" : "Pause"}
-            </button>
-          </div>
+                  if (statusRef.current === "paused") {
+                    setGameStatus("playing");
+                    focusScreen();
+                  }
+                }}
+                type="button"
+              >
+                {status === "paused" ? "Resume" : "Pause"}
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="control-actions two-wide">
+                <button className="action-button" onClick={() => beginGame()} type="button">
+                  Start Game
+                </button>
+                <button className="action-button secondary" onClick={openLeaderboard} type="button">
+                  Leaderboard
+                </button>
+              </div>
+
+              <div className="control-actions two-wide">
+                <button className="action-button secondary" onClick={() => beginGame()} type="button">
+                  {status === "gameover" ? "Retry" : "Quick Start"}
+                </button>
+                <button
+                  className="action-button secondary"
+                  onClick={() => {
+                    if (panelView === "leaderboard") {
+                      closeLeaderboard();
+                      return;
+                    }
+
+                    if (statusRef.current === "paused") {
+                      setGameStatus("playing");
+                      focusScreen();
+                    }
+                  }}
+                  type="button"
+                >
+                  {panelView === "leaderboard" ? "Close" : "Menu"}
+                </button>
+              </div>
+            </>
+          )}
 
           <div className="dpad" aria-label="Touch controls">
             <button
@@ -789,4 +851,7 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
+
+
 
