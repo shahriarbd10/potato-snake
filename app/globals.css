@@ -325,6 +325,32 @@ input {
   gap: 0.65rem;
 }
 
+.run-menu-card {
+  width: min(268px, 100%);
+  height: auto;
+  align-content: unset;
+  gap: 0.82rem;
+  padding: 0.88rem;
+}
+
+.run-menu-head {
+  align-items: center;
+}
+
+.run-menu-title {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.run-menu-actions {
+  gap: 0.58rem;
+}
+
+.run-menu-actions .action-button {
+  min-height: 44px;
+  padding: 0.62rem 0.55rem;
+}
+
 .name-card {
   text-align: center;
 }
@@ -809,7 +835,20 @@ input {
   .name-card {
     padding: 0.5rem;
   }
+
+  .run-menu-card {
+    width: min(244px, 100%);
+    padding: 0.58rem;
+  }
+
+  .run-menu-actions .action-button {
+    min-height: 36px;
+    font-size: 0.54rem;
+  }
 }
+
+
+
 
 
 

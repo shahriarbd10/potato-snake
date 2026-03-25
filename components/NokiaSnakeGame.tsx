@@ -584,7 +584,8 @@ export function NokiaSnakeGame() {
   const displayedLeaderboard = showFullLeaderboard
     ? leaderboard
     : leaderboard.slice(0, LEADERBOARD_PREVIEW_COUNT);
-  const showStatusOverlay = status !== "playing" && !isNaming && panelView !== "leaderboard";
+  const showStatusOverlay =
+    status !== "playing" && !isNaming && panelView !== "leaderboard" && !showRunMenu;
   const inRunMode = status === "playing" || status === "paused";
 
   return (
@@ -623,9 +624,9 @@ export function NokiaSnakeGame() {
 
             {showRunMenu ? (
               <div className="display-overlay" onPointerDown={(event) => event.stopPropagation()}>
-                <div className="display-card">
-                  <div className="display-card-top">
-                    <div>
+                <div className="display-card run-menu-card">
+                  <div className="display-card-top run-menu-head">
+                    <div className="run-menu-title">
                       <p className="name-card-kicker">Run menu</p>
                       <h3>Options</h3>
                     </div>
@@ -641,7 +642,7 @@ export function NokiaSnakeGame() {
                     </button>
                   </div>
 
-                  <div className="control-actions two-wide">
+                  <div className="control-actions two-wide run-menu-actions">
                     <button
                       className="action-button secondary"
                       onClick={() => {
@@ -801,7 +802,13 @@ export function NokiaSnakeGame() {
                       return;
                     }
 
-                    setShowRunMenu((current) => !current);
+                    setShowRunMenu((current) => {
+                      const next = !current;
+                      if (next && statusRef.current === "playing") {
+                        setGameStatus("paused");
+                      }
+                      return next;
+                    });
                     focusScreen();
                   }}
                   type="button"
@@ -916,6 +923,11 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
+
+
+
+
 
 
 
