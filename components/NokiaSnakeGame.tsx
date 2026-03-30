@@ -157,6 +157,33 @@ function CrownIcon({ rank }: { rank: number }) {
   );
 }
 
+function DpadArrowIcon({ direction }: { direction: Direction }) {
+  const rotation =
+    direction === "up"
+      ? "rotate(0 12 12)"
+      : direction === "right"
+        ? "rotate(90 12 12)"
+        : direction === "down"
+          ? "rotate(180 12 12)"
+          : "rotate(270 12 12)";
+
+  return (
+    <svg aria-hidden="true" className="dpad-arrow-icon" viewBox="0 0 24 24">
+      <g transform={rotation}>
+        <path d="M12 4v14" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.75" />
+        <path
+          d="M7.5 9.5 12 4l4.5 5.5"
+          fill="none"
+          stroke="currentColor"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2.75"
+        />
+      </g>
+    </svg>
+  );
+}
+
 export function NokiaSnakeGame() {
   const [game, setGame] = useState<GameState>(() => createInitialGame());
   const [status, setStatus] = useState<GameStatus>("idle");
@@ -868,7 +895,7 @@ export function NokiaSnakeGame() {
               onPointerDown={() => handleDirectionInput("up")}
               type="button"
             >
-              ^
+              <DpadArrowIcon direction="up" />
             </button>
             {inRunMode ? (
               <button
@@ -899,7 +926,7 @@ export function NokiaSnakeGame() {
               onPointerDown={() => handleDirectionInput("left")}
               type="button"
             >
-              &lt;
+              <DpadArrowIcon direction="left" />
             </button>
             <button
               aria-label="Move right"
@@ -907,7 +934,7 @@ export function NokiaSnakeGame() {
               onPointerDown={() => handleDirectionInput("right")}
               type="button"
             >
-              &gt;
+              <DpadArrowIcon direction="right" />
             </button>
             <button
               aria-label="Move down"
@@ -915,7 +942,7 @@ export function NokiaSnakeGame() {
               onPointerDown={() => handleDirectionInput("down")}
               type="button"
             >
-              v
+              <DpadArrowIcon direction="down" />
             </button>
           </div>
         </div>

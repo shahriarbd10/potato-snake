@@ -497,12 +497,12 @@ input {
 }
 
 .dpad {
-  width: min(220px, 100%);
+  width: min(276px, 100%);
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(3, 56px);
-  gap: 0.45rem;
+  grid-template-rows: repeat(3, 66px);
+  gap: 0.52rem;
   grid-template-areas:
     ". up ."
     "left center right"
@@ -510,13 +510,19 @@ input {
 }
 
 .dpad-button {
-  border-radius: 0.88rem;
+  border-radius: 0.94rem;
+  min-height: 66px;
   font-size: 1.08rem;
   font-weight: 700;
   cursor: pointer;
   display: grid;
   place-items: center;
   color: #f6f8ff;
+}
+
+.dpad-arrow-icon {
+  width: 1.5rem;
+  height: 1.5rem;
 }
 
 .dpad-button.up {
@@ -537,13 +543,30 @@ input {
 
 .dpad-button.center {
   grid-area: center;
-  font-size: 0.74rem;
+  font-size: 0.84rem;
   letter-spacing: 0.08em;
 }
 
 .action-button:active,
 .dpad-button:active {
   transform: translateY(1px);
+}
+
+@media (min-width: 760px) {
+  .dpad {
+    width: min(300px, 100%);
+    grid-template-rows: repeat(3, 72px);
+    gap: 0.58rem;
+  }
+
+  .dpad-button {
+    min-height: 72px;
+  }
+
+  .dpad-arrow-icon {
+    width: 1.65rem;
+    height: 1.65rem;
+  }
 }
 
 .leaderboard-shell {
@@ -764,14 +787,19 @@ input {
   }
 
   .dpad {
-    width: min(220px, 100%);
-    grid-template-rows: repeat(3, 50px);
-    gap: 0.32rem;
+    width: min(252px, 100%);
+    grid-template-rows: repeat(3, 58px);
+    gap: 0.4rem;
   }
 
   .dpad-button {
-    border-radius: 0.86rem;
-    font-size: 1.08rem;
+    border-radius: 0.92rem;
+    min-height: 58px;
+  }
+
+  .dpad-arrow-icon {
+    width: 1.4rem;
+    height: 1.4rem;
   }
 }
 
@@ -817,13 +845,18 @@ input {
   }
 
   .dpad {
-    width: min(212px, 100%);
-    grid-template-rows: repeat(3, 48px);
-    gap: 0.3rem;
+    width: min(236px, 100%);
+    grid-template-rows: repeat(3, 54px);
+    gap: 0.35rem;
   }
 
   .dpad-button {
-    font-size: 1.02rem;
+    min-height: 54px;
+  }
+
+  .dpad-arrow-icon {
+    width: 1.28rem;
+    height: 1.28rem;
   }
 
   .display-overlay,
