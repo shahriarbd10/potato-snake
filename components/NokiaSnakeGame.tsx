@@ -841,16 +841,16 @@ export function NokiaSnakeGame() {
                   </div>
 
                   <div className="leaderboard-shell in-display">
-                    {leaderboardState === "loading" ? <p className="menu-empty">Loading leaderboard...</p> : null}
-                    {leaderboardState === "error" ? <p className="menu-empty">Leaderboard is unavailable right now.</p> : null}
+                    {leaderboardState === "loading" ? <p className="menu-empty in-display">Loading leaderboard...</p> : null}
+                    {leaderboardState === "error" ? <p className="menu-empty in-display">Leaderboard is unavailable right now.</p> : null}
                     {leaderboardState === "ready" && leaderboard.length === 0 ? (
-                      <p className="menu-empty">No scores yet. Be the first topper.</p>
+                      <p className="menu-empty in-display">No scores yet. Be the first topper.</p>
                     ) : null}
 
                     {leaderboardState === "ready" && leaderboard.length > 0 ? (
                       <>
                         <ol
-                          className={`leaderboard-list in-display ${showFullLeaderboard ? "is-scrollable" : "is-preview"}`}
+                          className={`leaderboard-list in-display ${showFullLeaderboard ? "is-full" : "is-preview"}`}
                         >
                           {displayedLeaderboard.map((entry, index) => {
                             const rank = index + 1;
@@ -876,13 +876,15 @@ export function NokiaSnakeGame() {
                         </ol>
 
                         {leaderboard.length > LEADERBOARD_PREVIEW_COUNT ? (
-                          <button
-                            className="action-button secondary"
-                            onClick={() => setShowFullLeaderboard((current) => !current)}
-                            type="button"
-                          >
-                            {showFullLeaderboard ? "Back to Top 10" : "View Full List"}
-                          </button>
+                          <div className="leaderboard-footer">
+                            <button
+                              className="action-button secondary"
+                              onClick={() => setShowFullLeaderboard((current) => !current)}
+                              type="button"
+                            >
+                              {showFullLeaderboard ? "Back to Top 10" : "View Full List"}
+                            </button>
+                          </div>
                         ) : null}
                       </>
                     ) : null}

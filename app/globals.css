@@ -596,6 +596,11 @@ input {
   overflow: hidden;
 }
 
+.menu-empty.in-display {
+  align-self: center;
+  margin: 0;
+}
+
 .leaderboard-list {
   list-style: none;
   margin: 0;
@@ -607,17 +612,27 @@ input {
 
 .leaderboard-list.in-display {
   min-height: 0;
-}
-.leaderboard-list.in-display.is-preview {
-  overflow: hidden;
-  max-height: 21rem;
-}
-.leaderboard-list.in-display.is-scrollable {
+  height: 100%;
   overflow-y: auto;
   overflow-x: hidden;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
   padding-right: 0.16rem;
+}
+
+.leaderboard-list.in-display.is-preview,
+.leaderboard-list.in-display.is-full {
+  max-height: none;
+}
+
+.leaderboard-footer {
+  display: flex;
+  justify-content: stretch;
+}
+
+.leaderboard-footer .action-button {
+  width: 100%;
 }
 .leaderboard-item {
   display: grid;
@@ -722,8 +737,12 @@ input {
 }
 
 @media (max-width: 640px) {
-  .leaderboard-list.in-display.is-preview {
-    max-height: 16rem;
+  .leaderboard-shell.in-display {
+    gap: 0.56rem;
+  }
+
+  .leaderboard-list.in-display {
+    padding-right: 0.1rem;
   }
 
   .page-shell {
@@ -840,8 +859,12 @@ input {
 }
 
 @media (max-width: 420px) {
-  .leaderboard-list.in-display.is-preview {
-    max-height: 14rem;
+  .leaderboard-shell.in-display {
+    gap: 0.48rem;
+  }
+
+  .leaderboard-list.in-display {
+    padding-right: 0.08rem;
   }
 
   .page-shell {
