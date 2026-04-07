@@ -792,7 +792,6 @@ export function NokiaSnakeGame() {
                       onClick={() => {
                         window.location.assign("/");
                       }}
-                      }}
                       type="button"
                     >
                       Back to Home
