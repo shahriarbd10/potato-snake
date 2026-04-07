@@ -326,6 +326,10 @@ input {
   align-content: start;
 }
 
+.leaderboard-display {
+  overflow: hidden;
+}
+
 .display-card-top {
   display: flex;
   align-items: start;
@@ -583,7 +587,9 @@ input {
 
 .leaderboard-shell.in-display {
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: 0.7rem;
+  height: 100%;
   min-height: 0;
 }
 
@@ -597,7 +603,17 @@ input {
 }
 
 .leaderboard-list.in-display {
-  max-height: 100%;
+  min-height: 0;
+}
+
+.leaderboard-list.in-display.is-preview {
+  overflow: hidden;
+}
+
+.leaderboard-list.in-display.is-scrollable {
+  overflow: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.16rem;
 }
 
 .leaderboard-item {
@@ -921,6 +937,7 @@ input {
     display: none;
   }
 }
+
 
 
 

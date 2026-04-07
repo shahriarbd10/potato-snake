@@ -832,7 +832,7 @@ export function NokiaSnakeGame() {
                   <div className="display-card-top">
                     <div>
                       <p className="name-card-kicker">Hall of fame</p>
-                      <h3>{showFullLeaderboard ? "Top 100" : "Top 10"}</h3>
+                      <h3>{showFullLeaderboard ? "Full List" : "Top 10"}</h3>
                     </div>
                     <button className="action-button secondary mini" onClick={closeLeaderboard} type="button">
                       Back
@@ -848,7 +848,9 @@ export function NokiaSnakeGame() {
 
                     {leaderboardState === "ready" && leaderboard.length > 0 ? (
                       <>
-                        <ol className="leaderboard-list in-display">
+                        <ol
+                          className={`leaderboard-list in-display ${showFullLeaderboard ? "is-scrollable" : "is-preview"}`}
+                        >
                           {displayedLeaderboard.map((entry, index) => {
                             const rank = index + 1;
                             const isTopThree = rank <= 3;
@@ -878,7 +880,7 @@ export function NokiaSnakeGame() {
                             onClick={() => setShowFullLeaderboard((current) => !current)}
                             type="button"
                           >
-                            {showFullLeaderboard ? "Show Less" : "Show More"}
+                            {showFullLeaderboard ? "Back to Top 10" : "View Full List"}
                           </button>
                         ) : null}
                       </>
@@ -1062,6 +1064,7 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
 
 
 
