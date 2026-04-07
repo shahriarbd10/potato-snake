@@ -2,6 +2,7 @@
 
 import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { getPlayerNameValidationError, normalizePlayerName } from "@/lib/playerNameModeration";
 
 type Position = {
   x: number;
@@ -73,10 +74,6 @@ const KEY_TO_DIRECTION: Record<string, Direction> = {
   S: "down",
   D: "right"
 };
-
-function normalizePlayerName(value: string) {
-  return value.trim().replace(/\s+/g, " ").slice(0, 24);
-}
 
 function createPlayerId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -222,6 +219,7 @@ export function NokiaSnakeGame() {
   const [lastFinishedScore, setLastFinishedScore] = useState(0);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   const [showRunMenu, setShowRunMenu] = useState(false);
+  const [nameError, setNameError] = useState("");
   const screenRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const gameRef = useRef<GameState>(createInitialGame());
@@ -410,6 +408,7 @@ export function NokiaSnakeGame() {
       window.localStorage.setItem(PLAYER_ID_KEY, nextPlayerId);
     }
 
+    setNameError("");
     setPlayerName(nextName);
     setNameInput(nextName);
     window.localStorage.setItem(PLAYER_NAME_KEY, nextName);
@@ -864,12 +863,18 @@ export function NokiaSnakeGame() {
                   <input
                     className="name-input"
                     maxLength={24}
-                    onChange={(event) => setNameInput(event.target.value)}
+                    onChange={(event) => {
+                      setNameInput(event.target.value);
+                      if (nameError) {
+                        setNameError("");
+                      }
+                    }}
                     onKeyDown={(event) => event.stopPropagation()}
                     placeholder="Player"
                     ref={nameInputRef}
                     value={nameInput}
                   />
+                  {nameError ? <p className="name-error">{nameError}</p> : null}
                   <div className="name-card-actions">
                     <button className="action-button" disabled={startDisabled} type="submit">
                       Begin Run
@@ -1018,6 +1023,10 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
+
+
+
 
 
 

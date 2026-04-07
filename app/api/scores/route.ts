@@ -1,13 +1,6 @@
 import { NextResponse } from "next/server";
 import { getScoresCollection } from "@/lib/mongodb";
-
-function normalizeName(value: unknown) {
-  if (typeof value !== "string") {
-    return "";
-  }
-
-  return value.trim().replace(/\s+/g, " ").slice(0, 24);
-}
+import { getPlayerNameValidationError, normalizePlayerName } from "@/lib/playerNameModeration";
 
 function normalizePlayerId(value: unknown) {
   if (typeof value !== "string") {
@@ -21,11 +14,15 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
     const playerId = normalizePlayerId(body?.playerId);
-    const name = normalizeName(body?.name);
+    const name = normalizePlayerName(body?.name);
     const score = Number(body?.score);
+    const nameError = getPlayerNameValidationError(name);
 
-    if (!playerId || !name || Number.isNaN(score) || score <= 0) {
-      return NextResponse.json({ error: "Invalid score payload." }, { status: 400 });
+    if (!playerId || nameError || Number.isNaN(score) || score <= 0) {
+      return NextResponse.json(
+        { error: nameError ?? "Invalid score payload." },
+        { status: 400 }
+      );
     }
 
     const collection = await getScoresCollection();
