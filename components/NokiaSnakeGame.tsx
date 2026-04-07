@@ -790,12 +790,12 @@ export function NokiaSnakeGame() {
                     <button
                       className="action-button secondary"
                       onClick={() => {
-                        beginGame();
-                        setShowRunMenu(false);
+                        window.location.assign("/");
+                      }}
                       }}
                       type="button"
                     >
-                      Quick Start
+                      Back to Home
                     </button>
                     <button
                       className="action-button secondary"
@@ -1063,6 +1063,7 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
 
 
 
