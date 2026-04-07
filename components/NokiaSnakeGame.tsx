@@ -35,6 +35,7 @@ const GRID_WIDTH = 18;
 const GRID_HEIGHT = 24;
 const PLAYER_NAME_KEY = "potato-snake-player-name";
 const PLAYER_ID_KEY = "potato-snake-player-id";
+const SWIPE_GUIDE_DISMISSED_KEY = "potato-snake-swipe-guide-dismissed";
 const LEADERBOARD_PREVIEW_COUNT = 10;
 const INITIAL_SNAKE: Position[] = [
   { x: 7, y: 12 },
@@ -219,6 +220,8 @@ export function NokiaSnakeGame() {
   const [lastFinishedScore, setLastFinishedScore] = useState(0);
   const [showFullLeaderboard, setShowFullLeaderboard] = useState(false);
   const [showRunMenu, setShowRunMenu] = useState(false);
+  const [showSwipeGuide, setShowSwipeGuide] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [nameError, setNameError] = useState("");
   const screenRef = useRef<HTMLDivElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -270,6 +273,10 @@ export function NokiaSnakeGame() {
     const storedHighScore = window.localStorage.getItem("potato-snake-high-score");
     const storedName = window.localStorage.getItem(PLAYER_NAME_KEY) ?? "";
     let storedPlayerId = window.localStorage.getItem(PLAYER_ID_KEY) ?? "";
+    const supportsTouch =
+      window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+    const swipeGuideDismissed =
+      window.localStorage.getItem(SWIPE_GUIDE_DISMISSED_KEY) === "1";
 
     if (storedHighScore) {
       setHighScore(Number.parseInt(storedHighScore, 10) || 0);
@@ -281,8 +288,10 @@ export function NokiaSnakeGame() {
     }
 
     setPlayerId(storedPlayerId);
+    setIsTouchDevice(supportsTouch);
+    setShowSwipeGuide(supportsTouch && !swipeGuideDismissed);
 
-    if (storedName) {
+    if (storedName && !getPlayerNameValidationError(storedName)) {
       setPlayerName(storedName);
       setNameInput(storedName);
     }
@@ -342,6 +351,7 @@ export function NokiaSnakeGame() {
 
   function openLeaderboard() {
     setShowRunMenu(false);
+    setShowSwipeGuide(false);
     setPanelView("leaderboard");
     setShowFullLeaderboard(false);
     void loadLeaderboard();
@@ -354,8 +364,16 @@ export function NokiaSnakeGame() {
     focusScreen();
   }
 
+  function dismissSwipeGuide() {
+    setShowSwipeGuide(false);
+    window.localStorage.setItem(SWIPE_GUIDE_DISMISSED_KEY, "1");
+    focusScreen();
+  }
+
   function openNamePrompt() {
     setShowRunMenu(false);
+    setShowSwipeGuide(false);
+    setNameError("");
     setIsNaming(true);
     setPanelView("menu");
     focusScreen();
@@ -388,6 +406,7 @@ export function NokiaSnakeGame() {
     currentRoundRef.current += 1;
     setSaveState("idle");
     setShowRunMenu(false);
+    setShowSwipeGuide(false);
     setPanelView("menu");
     setIsNaming(false);
     resetGame("playing", openingDirection);
@@ -395,8 +414,10 @@ export function NokiaSnakeGame() {
 
   function commitNameAndStart() {
     const nextName = normalizePlayerName(nameInput);
+    const nextNameError = getPlayerNameValidationError(nextName);
 
-    if (!nextName) {
+    if (nextNameError) {
+      setNameError(nextNameError);
       return;
     }
 
@@ -415,6 +436,7 @@ export function NokiaSnakeGame() {
     currentRoundRef.current += 1;
     setSaveState("idle");
     setShowRunMenu(false);
+    setShowSwipeGuide(false);
     setPanelView("menu");
     setIsNaming(false);
     resetGame("playing");
@@ -643,7 +665,7 @@ export function NokiaSnakeGame() {
   }
 
   const normalizedName = normalizePlayerName(nameInput);
-  const startDisabled = normalizedName.length === 0;
+  const startDisabled = getPlayerNameValidationError(normalizedName) !== null;
   const overlayTitle =
     status === "gameover"
       ? "Game over"
@@ -664,7 +686,7 @@ export function NokiaSnakeGame() {
     ? leaderboard
     : leaderboard.slice(0, LEADERBOARD_PREVIEW_COUNT);
   const showStatusOverlay =
-    status !== "playing" && !isNaming && panelView !== "leaderboard" && !showRunMenu;
+    status !== "playing" && !isNaming && panelView !== "leaderboard" && !showRunMenu && !showSwipeGuide;
   const inRunMode = status === "playing" || status === "paused";
 
   return (
@@ -715,6 +737,24 @@ export function NokiaSnakeGame() {
                 <span>{overlayBody}</span>
               </div>
             ) : null}
+
+            {showSwipeGuide && isTouchDevice ? (
+              <div className="display-overlay" onPointerDown={(event) => event.stopPropagation()}>
+                <div className="display-card swipe-guide-card">
+                  <p className="name-card-kicker">Mobile tip</p>
+                  <h3>Swipe to move</h3>
+                  <p className="menu-copy swipe-guide-copy">
+                    Swipe on the game screen to steer the snake. Right, left, up, and down all work.
+                  </p>
+                  <div className="control-actions swipe-guide-actions">
+                    <button className="action-button" onClick={dismissSwipeGuide} type="button">
+                      Got it
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
 
             {showRunMenu ? (
               <div className="display-overlay" onPointerDown={(event) => event.stopPropagation()}>
@@ -1023,6 +1063,10 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
+
+
+
+
 
 
 
