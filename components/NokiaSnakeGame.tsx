@@ -25,6 +25,14 @@ type LeaderboardEntry = {
   score: number;
 };
 
+<<<<<<< HEAD
+=======
+type SwipePoint = {
+  x: number;
+  y: number;
+};
+
+>>>>>>> c86397a (Initial commit)
 const GRID_WIDTH = 18;
 const GRID_HEIGHT = 24;
 const PLAYER_NAME_KEY = "potato-snake-player-name";
@@ -148,6 +156,27 @@ function rankLabel(rank: number) {
   return `${rank}th`;
 }
 
+<<<<<<< HEAD
+=======
+function getSwipeDirection(start: SwipePoint, end: SwipePoint) {
+  const deltaX = end.x - start.x;
+  const deltaY = end.y - start.y;
+  const absX = Math.abs(deltaX);
+  const absY = Math.abs(deltaY);
+  const minimumSwipeDistance = 24;
+
+  if (Math.max(absX, absY) < minimumSwipeDistance) {
+    return null;
+  }
+
+  if (absX > absY) {
+    return deltaX > 0 ? "right" : "left";
+  }
+
+  return deltaY > 0 ? "down" : "up";
+}
+
+>>>>>>> c86397a (Initial commit)
 function CrownIcon({ rank }: { rank: number }) {
   return (
     <svg aria-hidden="true" className={`crown-icon rank-${rank}`} viewBox="0 0 48 32">
@@ -206,6 +235,11 @@ export function NokiaSnakeGame() {
   const pendingDirectionRef = useRef<Direction | null>(null);
   const currentRoundRef = useRef(0);
   const lastSavedRoundRef = useRef(0);
+<<<<<<< HEAD
+=======
+  const swipeStartRef = useRef<SwipePoint | null>(null);
+  const swipePointerIdRef = useRef<number | null>(null);
+>>>>>>> c86397a (Initial commit)
 
   const speed = Math.max(95, 190 - game.score * 6);
 
@@ -421,6 +455,37 @@ export function NokiaSnakeGame() {
     queueDirection(nextDirection);
   }
 
+<<<<<<< HEAD
+=======
+  function handleSwipeStart(pointerId: number, point: SwipePoint) {
+    swipePointerIdRef.current = pointerId;
+    swipeStartRef.current = point;
+  }
+
+  function handleSwipeEnd(pointerId: number, point: SwipePoint) {
+    if (swipePointerIdRef.current !== pointerId || !swipeStartRef.current) {
+      return;
+    }
+
+    const swipeDirection = getSwipeDirection(swipeStartRef.current, point);
+    swipePointerIdRef.current = null;
+    swipeStartRef.current = null;
+
+    if (swipeDirection) {
+      handleDirectionInput(swipeDirection);
+    }
+  }
+
+  function cancelSwipe(pointerId?: number) {
+    if (pointerId !== undefined && swipePointerIdRef.current !== pointerId) {
+      return;
+    }
+
+    swipePointerIdRef.current = null;
+    swipeStartRef.current = null;
+  }
+
+>>>>>>> c86397a (Initial commit)
   function readDirectionFromKey(event: Pick<KeyboardEvent, "code" | "key">) {
     return KEY_TO_DIRECTION[event.code] ?? KEY_TO_DIRECTION[event.key] ?? null;
   }
@@ -630,6 +695,24 @@ export function NokiaSnakeGame() {
             aria-label="Potato Snake game board"
             className="game-screen"
             onKeyDown={(event: ReactKeyboardEvent<HTMLDivElement>) => handleKeyboardEvent(event)}
+<<<<<<< HEAD
+=======
+            onPointerCancel={(event) => {
+              if (event.pointerType === "touch") {
+                cancelSwipe(event.pointerId);
+              }
+            }}
+            onPointerDown={(event) => {
+              if (event.pointerType === "touch") {
+                handleSwipeStart(event.pointerId, { x: event.clientX, y: event.clientY });
+              }
+            }}
+            onPointerUp={(event) => {
+              if (event.pointerType === "touch") {
+                handleSwipeEnd(event.pointerId, { x: event.clientX, y: event.clientY });
+              }
+            }}
+>>>>>>> c86397a (Initial commit)
             ref={screenRef}
             role="application"
             style={
@@ -968,3 +1051,7 @@ export function NokiaSnakeGame() {
 
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> c86397a (Initial commit)
