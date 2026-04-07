@@ -711,8 +711,8 @@ input {
       max(0.24rem, env(safe-area-inset-bottom));
     gap: 0.16rem;
     justify-items: center;
-    justify-content: start;
-    align-content: start;
+    justify-content: center;
+    align-content: center;
     overflow: hidden;
   }
 
@@ -723,6 +723,7 @@ input {
   .nokia-stage {
     width: min(100vw - 0.4rem, calc((100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.4rem) * 0.5));
     justify-self: center;
+    align-self: center;
   }
 
   .phone-frame {
@@ -822,11 +823,13 @@ input {
       0.16rem
       max(0.2rem, env(safe-area-inset-bottom));
     gap: 0.12rem;
-    align-content: start;
+    justify-content: center;
+    align-content: center;
   }
 
   .nokia-stage {
     width: min(100vw - 0.3rem, calc((100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.24rem) * 0.485));
+    align-self: center;
   }
 
   .phone-frame {
