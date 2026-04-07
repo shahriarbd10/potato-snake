@@ -724,7 +724,8 @@ export function NokiaSnakeGame() {
             style={
               {
                 "--grid-columns": GRID_WIDTH,
-                "--grid-rows": GRID_HEIGHT
+                "--grid-rows": GRID_HEIGHT,
+                touchAction: panelView === "leaderboard" ? "pan-y" : "none"
               } as CSSProperties
             }
             tabIndex={0}
@@ -1064,32 +1065,3 @@ export function NokiaSnakeGame() {
     </section>
   );
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
