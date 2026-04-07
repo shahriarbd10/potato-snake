@@ -7,13 +7,8 @@ export default function Home() {
         <p className="eyebrow">Classic pocket play</p>
         <h1>Potato Snake</h1>
         <p className="intro">
-<<<<<<< HEAD
-          A dark retro snake game with a chunky pixel trail, wraparound movement,
-          and a tiny potato snack waiting on the grid.
-=======
           Jump back to the days of simple phones, endless retries, and pure fun.
           Chase the potato, beat your best score, and relive that old-school rush.
->>>>>>> c86397a (Initial commit)
         </p>
       </section>
 
@@ -23,10 +18,3 @@ export default function Home() {
     </main>
   );
 }
-
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> c86397a (Initial commit)

@@ -207,10 +207,7 @@ input {
     inset 0 -10px 22px rgba(83, 100, 74, 0.28);
   overflow: hidden;
   outline: none;
-<<<<<<< HEAD
-=======
   touch-action: none;
->>>>>>> c86397a (Initial commit)
 }
 
 .game-cell {
@@ -910,7 +907,4 @@ input {
 }
 
 
-<<<<<<< HEAD
-=======
 
->>>>>>> c86397a (Initial commit)
